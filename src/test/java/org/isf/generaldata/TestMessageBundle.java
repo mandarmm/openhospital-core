@@ -23,9 +23,43 @@ package org.isf.generaldata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ResourceBundle;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class TestMessageBundle {
+
+	@AfterEach
+	void forgetTheBundles() {
+		setBundles(null, false);
+	}
+
+	/** As in openhospital-api: the bundle is not initialized. */
+	private static void setBundles(ResourceBundle resourceBundle, boolean serverBundleLoaded) {
+		ReflectionTestUtils.setField(MessageBundle.class, "resourceBundle", resourceBundle);
+		ReflectionTestUtils.setField(MessageBundle.class, "serverResourceBundle", null);
+		ReflectionTestUtils.setField(MessageBundle.class, "serverResourceBundleLoaded", serverBundleLoaded);
+	}
+
+	@Test
+	void testGetServerMessage_translatedWhereMessagesKeepTheirKeys() {
+		GeneralData.LANGUAGE = "en";
+		setBundles(null, false);
+
+		assertThat(MessageBundle.getMessage("angal.common.reminder.txt")).isEqualTo("angal.common.reminder.txt");
+		assertThat(MessageBundle.getServerMessage("angal.common.reminder.txt")).isEqualTo("Reminder");
+		assertThat(MessageBundle.getServerMessage("someKey")).isEqualTo("someKey");
+	}
+
+	@Test
+	void testGetServerMessage_theMessageWhereTheBundleIsInitialized() {
+		GeneralData.LANGUAGE = "en";
+		MessageBundle.initialize();
+
+		assertThat(MessageBundle.getServerMessage("angal.common.reminder.txt")).isEqualTo(MessageBundle.getMessage("angal.common.reminder.txt"));
+	}
 
 	@Test
 	void testGetMessageBundle() {

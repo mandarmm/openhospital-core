@@ -324,7 +324,7 @@ public class VisitManager {
 	private String prepareSmsFromVisit(Visit visit) {
 
 		String note = visit.getNote();
-		StringBuilder sb = new StringBuilder(MessageBundle.getMessage("angal.common.reminder.txt").toUpperCase()).append(": ");
+		StringBuilder sb = new StringBuilder(MessageBundle.getServerMessage("angal.common.reminder.txt").toUpperCase()).append(": ");
 		sb.append(visit.toStringSMS());
 		if (note != null && !note.isEmpty()) {
 			sb.append(" - ").append(note);

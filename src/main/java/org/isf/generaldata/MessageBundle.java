@@ -49,6 +49,10 @@ public class MessageBundle {
 
 	private static ResourceBundle defaultResourceBundle;
 
+	private static ResourceBundle serverResourceBundle;
+
+	private static boolean serverResourceBundleLoaded;
+
 	public static void initialize() {
 		try {
 			defaultResourceBundle = ResourceBundle.getBundle("language", new Locale("en"));
@@ -82,6 +86,50 @@ public class MessageBundle {
 			LOGGER.error(">> key not found: {}", key);
 		}
 		return message;
+	}
+
+	/**
+	 * A text that the server stores or sends, such as an SMS reminder, in the hospital's language
+	 * ({@link GeneralData#LANGUAGE}).
+	 * <p>
+	 * Where the bundle is initialized, as in the desktop client, it is {@link #getMessage(String)}. A server that does
+	 * not initialize it, such as openhospital-api, leaves the messages it returns as keys for its clients to translate
+	 * in their users' languages; the texts it stores or sends are translated here, from the {@code language} bundle on
+	 * its classpath. Without that bundle, the key is returned.
+	 *
+	 * @param key a MessageBundle key
+	 * @return the text in the hospital's language, or the key
+	 */
+	public static String getServerMessage(String key) {
+		if (resourceBundle != null) {
+			return getMessage(key);
+		}
+		ResourceBundle bundle = getServerBundle();
+		if (bundle == null) {
+			return key;
+		}
+		try {
+			return bundle.getString(key);
+		} catch (MissingResourceException e) {
+			LOGGER.warn(">> key not found in the server bundle: {}", key);
+			return key;
+		}
+	}
+
+	private static synchronized ResourceBundle getServerBundle() {
+		if (GeneralData.LANGUAGE == null) {
+			// the settings are not read yet
+			return null;
+		}
+		if (!serverResourceBundleLoaded) {
+			serverResourceBundleLoaded = true;
+			try {
+				serverResourceBundle = ResourceBundle.getBundle("language", new Locale(GeneralData.LANGUAGE), new UTF8Control());
+			} catch (MissingResourceException e) {
+				LOGGER.warn(">> no resource bundle found for \"{}\": the texts the server stores or sends keep their keys", GeneralData.LANGUAGE);
+			}
+		}
+		return serverResourceBundle;
 	}
 
 	public static ResourceBundle getBundle() {

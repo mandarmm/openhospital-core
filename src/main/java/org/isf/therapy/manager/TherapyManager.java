@@ -214,7 +214,7 @@ public class TherapyManager {
 	private String prepareSmsFromTherapy(Therapy th) {
 
 		String note = th.getNote();
-		StringBuilder sb = new StringBuilder(MessageBundle.getMessage("angal.common.reminder.txt").toUpperCase()).append(": ");
+		StringBuilder sb = new StringBuilder(MessageBundle.getServerMessage("angal.common.reminder.txt").toUpperCase()).append(": ");
 		sb.append(th.getMedical().toString()).append(" - ");
 		sb.append(th.getQty()).append(th.getUnits()).append(" - ");
 		sb.append(th.getFreqInDay()).append("pd");
