@@ -235,6 +235,41 @@ class TestMergePatient extends OHCoreTestCase {
 	}
 
 	@Test
+	void testMgrMergePatientStoresTheMergedDetails() throws Exception {
+		// given: the patients as a client has them, not the ones of the persistence context
+		Patient patient1 = testPatient.setup(false);
+		patient1.setAddress(null);
+		patient1.setTelephone(null);
+		patient1.setNote("Note 1");
+		int mergedCode = patientIoOperationRepository.saveAndFlush(patient1).getCode();
+		Patient patient2 = testPatient.setup(false);
+		patient2.setFirstName("Other");
+		patient2.setAddress("Other address");
+		patient2.setTelephone("12345");
+		patient2.setNote("Note 2");
+		int obsoleteCode = patientIoOperationRepository.saveAndFlush(patient2).getCode();
+		entityManager.clear();
+		Patient mergedPatient = patientIoOperationRepository.findById(mergedCode).orElseThrow();
+		Patient obsoletePatient = patientIoOperationRepository.findById(obsoleteCode).orElseThrow();
+		entityManager.clear();
+		// the name of the obsolete patient chosen
+		mergedPatient.setFirstName(obsoletePatient.getFirstName());
+
+		// when:
+		patientBrowserManager.mergePatient(mergedPatient, obsoletePatient);
+		entityManager.flush();
+		entityManager.clear();
+
+		// then:
+		Patient stored = patientIoOperationRepository.findById(mergedCode).orElseThrow();
+		assertThat(stored.getFirstName()).isEqualTo("Other");
+		assertThat(stored.getAddress()).isEqualTo("Other address");
+		assertThat(stored.getTelephone()).isEqualTo("12345");
+		assertThat(stored.getNote()).isEqualTo("Note 2\n\nNote 1");
+		assertThat(patientIoOperationRepository.findById(obsoleteCode).orElseThrow().getDeleted()).isEqualTo('Y');
+	}
+
+	@Test
 	void testMgrMergePatientMergeBirthDateMissingAgeTypePatient2HasBirthDate() throws Exception {
 		// given:
 		Patient patient1 = testPatient.setup(false);

@@ -262,13 +262,34 @@ public class PatientIoOperations {
 	}
 
 	/**
-	 * Method that merges all clinic details under the same PAT_ID.
+	 * Method that merges all clinic details under the same PAT_ID. The merged patient's details (filled in from the
+	 * obsolete patient, the name chosen) are stored; its photo is left as it is.
 	 *
 	 * @param mergedPatient
 	 * @param obsoletePatient
 	 * @throws OHServiceException
 	 */
 	public void mergePatientHistory(Patient mergedPatient, Patient obsoletePatient) throws OHServiceException {
+		Patient stored = repository.findById(mergedPatient.getCode()).orElse(null);
+		if (stored != null && stored != mergedPatient) {
+			stored.setFirstName(mergedPatient.getFirstName());
+			stored.setSecondName(mergedPatient.getSecondName());
+			stored.setBirthDate(mergedPatient.getBirthDate());
+			stored.setAge(mergedPatient.getAge());
+			stored.setAgetype(mergedPatient.getAgetype());
+			stored.setAddress(mergedPatient.getAddress());
+			stored.setCity(mergedPatient.getCity());
+			stored.setNextKin(mergedPatient.getNextKin());
+			stored.setTelephone(mergedPatient.getTelephone());
+			stored.setMotherName(mergedPatient.getMotherName());
+			stored.setMother(mergedPatient.getMother());
+			stored.setFatherName(mergedPatient.getFatherName());
+			stored.setFather(mergedPatient.getFather());
+			stored.setBloodType(mergedPatient.getBloodType());
+			stored.setHasInsurance(mergedPatient.getHasInsurance());
+			stored.setParentTogether(mergedPatient.getParentTogether());
+			stored.setNote(mergedPatient.getNote());
+		}
 		repository.updateDeleted(obsoletePatient.getCode(), auditorAware.getCurrentAuditor().orElse(null), TimeTools.getNow());
 		applicationEventPublisher.publishEvent(new PatientMergedEvent(obsoletePatient, mergedPatient));
 	}
