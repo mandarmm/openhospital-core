@@ -48,6 +48,8 @@ import javax.sql.rowset.serial.SerialException;
 
 import org.isf.dicom.model.DicomData;
 import org.isf.dicom.model.FileDicom;
+import org.isf.dicomtype.model.DicomType;
+import org.isf.dicomtype.service.DicomTypeIoOperationRepository;
 import org.isf.generaldata.MessageBundle;
 import org.isf.utils.exception.OHDicomException;
 import org.isf.utils.exception.OHServiceException;
@@ -55,6 +57,7 @@ import org.isf.utils.exception.model.OHExceptionMessage;
 import org.isf.utils.time.TimeTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -77,6 +80,10 @@ public class FileSystemDicomManager implements DicomManagerInterface {
 	 * Root dir for data storage
 	 */
 	private File dir;
+
+	/** To read back a stored file's type; absent when the manager is built outside Spring (then only its code is read). */
+	@Autowired(required = false)
+	private DicomTypeIoOperationRepository dicomTypeRepository;
 	private FilterSerieDetail dsf = new FilterSerieDetail();
 
 	/**
@@ -300,6 +307,7 @@ public class FileSystemDicomManager implements DicomManagerInterface {
 				// so cannot be empty and will be used only for this cycle
 				ps.println("dicomInstanceUID =" + dicomInstanceUID);
 				ps.println("modality =" + dicom.getModality());
+				ps.println("dicomTypeID =" + (dicom.getDicomType() == null ? "" : dicom.getDicomType().getDicomTypeID()));
 				ps.flush();
 			}
 			File data = new File(df, idFile + ".data");
@@ -393,6 +401,11 @@ public class FileSystemDicomManager implements DicomManagerInterface {
 		rv.setDicomSeriesDescription(p.getProperty("dicomSeriesDescription"));
 		rv.setDicomInstanceUID(p.getProperty("dicomInstanceUID"));
 		rv.setModality(p.getProperty("modality"));
+		String dicomTypeID = p.getProperty("dicomTypeID");
+		if (dicomTypeID != null && !dicomTypeID.isBlank()) {
+			rv.setDicomType(dicomTypeRepository == null ? new DicomType(dicomTypeID, null)
+				: dicomTypeRepository.findById(dicomTypeID).orElse(new DicomType(dicomTypeID, null)));
+		}
 	}
 
 	/**

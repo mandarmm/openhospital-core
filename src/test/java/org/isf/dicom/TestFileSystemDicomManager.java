@@ -175,6 +175,12 @@ class TestFileSystemDicomManager extends OHCoreTestCase {
 		fr.close();
 		assertThat(dicomFileDir.listFiles()).hasSize(3);
 		assertThat(dicomProperties.getProperty("dicomInstanceUID")).isEqualTo("TestInstanceUid");
+		assertThat(dicomProperties.getProperty("dicomTypeID")).isEqualTo(dicomType.getDicomTypeID());
+		// the type is read back with the file
+		FileDicom[] fileDicoms = fileSystemDicomManager.loadPatientFiles(dicomFile.getPatId());
+		assertThat(fileDicoms).hasSize(1);
+		assertThat(fileDicoms[0].getDicomType()).isNotNull();
+		assertThat(fileDicoms[0].getDicomType().getDicomTypeID()).isEqualTo(dicomType.getDicomTypeID());
 
 		cleanupDicomFiles(dicomFile.getPatId());
 	}
